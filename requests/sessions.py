@@ -45,6 +45,7 @@ if sys.platform == 'win32':
 else:
     preferred_clock = time.time
 
+from PyQt5.QtCore import QObject
 
 def merge_setting(request_setting, session_setting, dict_class=OrderedDict):
     """Determines appropriate setting for a given request, taking into account
@@ -92,7 +93,7 @@ def merge_hooks(request_hooks, session_hooks, dict_class=OrderedDict):
     return merge_setting(request_hooks, session_hooks, dict_class)
 
 
-class SessionRedirectMixin(object):
+class SessionRedirectMixin(QObject):
 
     def get_redirect_target(self, resp):
         """Receives a Response. Returns a redirect URI or ``None``"""
@@ -424,6 +425,7 @@ class Session(SessionRedirectMixin):
         self.close()
 
     def prepare_request(self, request):
+        print(">prepare_request")
         """Constructs a :class:`PreparedRequest <PreparedRequest>` for
         transmission and returns it. The :class:`PreparedRequest` has settings
         merged from the :class:`Request <Request>` instance and those of the
@@ -438,15 +440,20 @@ class Session(SessionRedirectMixin):
         # Bootstrap CookieJar.
         if not isinstance(cookies, cookielib.CookieJar):
             cookies = cookiejar_from_dict(cookies)
+        print("Bootstrap CookieJar.")
 
         # Merge with session cookies
         merged_cookies = merge_cookies(
             merge_cookies(RequestsCookieJar(), self.cookies), cookies)
 
+        print("Merge with session cookies")
+
         # Set environment's basic authentication if not explicitly set.
         auth = request.auth
         if self.trust_env and not auth and not self.auth:
             auth = get_netrc_auth(request.url)
+
+        print("Set environment's basic authentication if not explicitly set.")
 
         p = PreparedRequest()
         p.prepare(
@@ -461,6 +468,7 @@ class Session(SessionRedirectMixin):
             cookies=merged_cookies,
             hooks=merge_hooks(request.hooks, self.hooks),
         )
+        print("PreparedRequest().prepare()")
         return p
 
     def request(self, method, url,
@@ -516,6 +524,7 @@ class Session(SessionRedirectMixin):
             cookies=cookies,
             hooks=hooks,
         )
+        print("Create the Request.")
         prep = self.prepare_request(req)
 
         proxies = proxies or {}
@@ -523,6 +532,7 @@ class Session(SessionRedirectMixin):
         settings = self.merge_environment_settings(
             prep.url, proxies, stream, verify, cert
         )
+        print("merge_settings")
 
         # Send the request.
         send_kwargs = {
@@ -615,6 +625,7 @@ class Session(SessionRedirectMixin):
         return self.request('DELETE', url, **kwargs)
 
     def send(self, request, **kwargs):
+        print(">send")
         """Send a given PreparedRequest.
 
         :rtype: requests.Response
@@ -635,12 +646,15 @@ class Session(SessionRedirectMixin):
         allow_redirects = kwargs.pop('allow_redirects', True)
         stream = kwargs.get('stream')
         hooks = request.hooks
+        print("Set up variables needed for resolve_redirects and dispatching of hooks")
 
         # Get the appropriate adapter to use
         adapter = self.get_adapter(url=request.url)
+        print("Get the appropriate adapter to use")
 
         # Start time (approximately) of the request
         start = preferred_clock()
+        print("Start time (approximately) of the request")
 
         # Send the request
         r = adapter.send(request, **kwargs)

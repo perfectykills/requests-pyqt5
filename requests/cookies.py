@@ -16,13 +16,16 @@ import calendar
 from ._internal_utils import to_native_string
 from .compat import cookielib, urlparse, urlunparse, Morsel, MutableMapping
 
+"""
 try:
     import threading
 except ImportError:
     import dummy_threading as threading
+"""
 
+from PyQt5.QtCore import QObject
 
-class MockRequest(object):
+class MockRequest(QObject):
     """Wraps a `requests.Request` to mimic a `urllib2.Request`.
 
     The code in `cookielib.CookieJar` expects this interface in order to correctly
@@ -94,7 +97,7 @@ class MockRequest(object):
         return self.get_host()
 
 
-class MockResponse(object):
+class MockResponse(QObject):
     """Wraps a `httplib.HTTPMessage` to mimic a `urllib.addinfourl`.
 
     ...what? Basically, expose the parsed HTTP headers from the server response
@@ -402,15 +405,16 @@ class RequestsCookieJar(cookielib.CookieJar, MutableMapping):
         """Unlike a normal CookieJar, this class is pickleable."""
         state = self.__dict__.copy()
         # remove the unpickleable RLock object
-        state.pop('_cookies_lock')
+        # state.pop('_cookies_lock')
         return state
 
     def __setstate__(self, state):
         """Unlike a normal CookieJar, this class is pickleable."""
         self.__dict__.update(state)
+        """
         if '_cookies_lock' not in self.__dict__:
             self._cookies_lock = threading.RLock()
-
+        """
     def copy(self):
         """Return a copy of this RequestsCookieJar."""
         new_cj = RequestsCookieJar()

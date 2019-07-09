@@ -56,8 +56,9 @@ DEFAULT_REDIRECT_LIMIT = 30
 CONTENT_CHUNK_SIZE = 10 * 1024
 ITER_CHUNK_SIZE = 512
 
+from PyQt5.QtCore import QObject
 
-class RequestEncodingMixin(object):
+class RequestEncodingMixin(QObject):
     @property
     def path_url(self):
         """Build the path URL to use."""
@@ -171,7 +172,7 @@ class RequestEncodingMixin(object):
         return body, content_type
 
 
-class RequestHooksMixin(object):
+class RequestHooksMixin(QObject):
     def register_hook(self, event, hook):
         """Properly register a hook."""
 
@@ -310,17 +311,24 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         """Prepares the entire request with the given parameters."""
 
         self.prepare_method(method)
+        print("prepare_method")
         self.prepare_url(url, params)
+        print("prepare_url")
         self.prepare_headers(headers)
+        print("prepare_headers")
         self.prepare_cookies(cookies)
+        print("prepare_cookies")
         self.prepare_body(data, files, json)
+        print("prepare_body")
         self.prepare_auth(auth, url)
+        print("prepare_auth")
 
         # Note that prepare_auth must be last to enable authentication schemes
         # such as OAuth to work on a fully prepared request.
 
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
+        print("prepare_hooks")
 
     def __repr__(self):
         return '<PreparedRequest [%s]>' % (self.method)
@@ -363,9 +371,11 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
             url = url.decode('utf8')
         else:
             url = unicode(url) if is_py2 else str(url)
+        print("Accept objects that have string representations.")
 
         # Remove leading whitespaces from url
         url = url.lstrip()
+        print("Remove leading whitespaces from url")
 
         # Don't do any URL preparation for non-HTTP schemes like `mailto`,
         # `data` etc to work around exceptions from `url_parse`, which
@@ -373,12 +383,14 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         if ':' in url and not url.lower().startswith('http'):
             self.url = url
             return
+        print("mailto scheme")
 
         # Support for unicode domain names and paths.
         try:
             scheme, auth, host, port, path, query, fragment = parse_url(url)
         except LocationParseError as e:
             raise InvalidURL(*e.args)
+        print("parse_url")
 
         if not scheme:
             error = ("Invalid URL {0!r}: No schema supplied. Perhaps you meant http://{0}?")
@@ -388,6 +400,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
 
         if not host:
             raise InvalidURL("Invalid URL %r: No host supplied" % url)
+        print("schema check")
 
         # In general, we want to try IDNA encoding the hostname if the string contains
         # non-ASCII characters. This allows users to automatically get the correct IDNA
@@ -400,6 +413,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
                 raise InvalidURL('URL has an invalid label.')
         elif host.startswith(u'*'):
             raise InvalidURL('URL has an invalid label.')
+        print("ascii check")
 
         # Carefully reconstruct the network location
         netloc = auth or ''
@@ -408,6 +422,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         netloc += host
         if port:
             netloc += ':' + str(port)
+        print("Carefully reconstruct the network location")
 
         # Bare domains aren't valid URLs.
         if not path:
@@ -425,8 +440,12 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
             if isinstance(fragment, str):
                 fragment = fragment.encode('utf-8')
 
+        print("py2=>utf8")
+
         if isinstance(params, (str, bytes)):
             params = to_native_string(params)
+
+        print("params to_native_string")
 
         enc_params = self._encode_params(params)
         if enc_params:
@@ -435,7 +454,10 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
             else:
                 query = enc_params
 
+        print("encode params")
+
         url = requote_uri(urlunparse([scheme, netloc, path, None, query, fragment]))
+        print("requote_uri")
         self.url = url
 
     def prepare_headers(self, headers):
@@ -583,7 +605,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
             self.register_hook(event, hooks[event])
 
 
-class Response(object):
+class Response(QObject):
     """The :class:`Response <Response>` object, which contains a
     server's response to an HTTP request.
     """

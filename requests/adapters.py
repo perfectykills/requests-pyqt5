@@ -7,6 +7,7 @@ requests.adapters
 This module contains the transport adapters that Requests uses to define
 and maintain connections.
 """
+from PyQt5.QtCore import QObject
 
 import os.path
 import socket
@@ -52,7 +53,7 @@ DEFAULT_RETRIES = 0
 DEFAULT_POOL_TIMEOUT = None
 
 
-class BaseAdapter(object):
+class BaseAdapter(QObject):
     """The Base Transport Adapter"""
 
     def __init__(self):

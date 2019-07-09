@@ -6,12 +6,13 @@ requests.auth
 
 This module contains the authentication handlers for Requests.
 """
+from PyQt5.QtCore import QObject
 
 import os
 import re
 import time
 import hashlib
-import threading
+#import threading
 import warnings
 
 from base64 import b64encode
@@ -69,7 +70,7 @@ def _basic_auth_str(username, password):
     return authstr
 
 
-class AuthBase(object):
+class AuthBase(QObject):
     """Base class that all auth implementations derive from"""
 
     def __call__(self, r):
@@ -105,8 +106,9 @@ class HTTPProxyAuth(HTTPBasicAuth):
         return r
 
 
-class HTTPDigestAuth(AuthBase):
+#class HTTPDigestAuth(AuthBase):
     """Attaches HTTP Digest Authentication to the given Request object."""
+    """
 
     def __init__(self, username, password):
         self.username = username
@@ -125,9 +127,7 @@ class HTTPDigestAuth(AuthBase):
             self._thread_local.num_401_calls = None
 
     def build_digest_header(self, method, url):
-        """
-        :rtype: str
-        """
+        #:rtype: str
 
         realm = self._thread_local.chal['realm']
         nonce = self._thread_local.chal['nonce']
@@ -227,16 +227,13 @@ class HTTPDigestAuth(AuthBase):
         return 'Digest %s' % (base)
 
     def handle_redirect(self, r, **kwargs):
-        """Reset num_401_calls counter on redirects."""
+        #Reset num_401_calls counter on redirects.
         if r.is_redirect:
             self._thread_local.num_401_calls = 1
 
     def handle_401(self, r, **kwargs):
-        """
-        Takes the given response and tries digest-auth, if needed.
-
-        :rtype: requests.Response
-        """
+        #Takes the given response and tries digest-auth, if needed.
+        #:rtype: requests.Response
 
         # If response is not 4xx, do not auth
         # See https://github.com/requests/requests/issues/3772
@@ -303,3 +300,4 @@ class HTTPDigestAuth(AuthBase):
 
     def __ne__(self, other):
         return not self == other
+"""
