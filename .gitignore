@@ -25,3 +25,4 @@ dist
 /.mypy_cache/
 
 push.sh
+requests/urllib3
